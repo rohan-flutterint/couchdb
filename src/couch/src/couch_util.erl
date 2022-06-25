@@ -43,6 +43,7 @@
 -export([set_process_priority/2]).
 -export([hmac/3]).
 -export([version_to_binary/1]).
+-export([validate_design_access/1, validate_design_access/2]).
 
 -include_lib("couch/include/couch_db.hrl").
 
@@ -829,3 +830,16 @@ hex(X) ->
         16#6530, 16#6531, 16#6532, 16#6533, 16#6534, 16#6535, 16#6536, 16#6537, 16#6538, 16#6539, 16#6561, 16#6562, 16#6563, 16#6564, 16#6565, 16#6566,
         16#6630, 16#6631, 16#6632, 16#6633, 16#6634, 16#6635, 16#6636, 16#6637, 16#6638, 16#6639, 16#6661, 16#6662, 16#6663, 16#6664, 16#6665, 16#6666
     }).
+
+validate_design_access(DDoc) ->
+    validate_design_access1(DDoc, true).
+
+validate_design_access(Db, DDoc) ->
+    validate_design_access1(DDoc, couch_db:has_access_enabled(Db)).
+
+validate_design_access1(_DDoc, false) -> ok;
+validate_design_access1(DDoc, true) ->
+    is_users_ddoc(DDoc).
+
+is_users_ddoc(#doc{access=[<<"_users">>]}) -> ok;
+is_users_ddoc(_) -> throw({forbidden, <<"per-user ddoc access">>}).
