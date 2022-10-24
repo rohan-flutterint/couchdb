@@ -299,7 +299,7 @@ init([N]) ->
     ok = config:listen_for_changes(?MODULE, N),
     ok = couch_file:init_delete_dir(RootDir),
     % hash_admin_passwords(),
-    couch_password_server:hash(),
+    couch_password_server:sync_hash(),
     ets:new(couch_dbs(N), [
         set,
         protected,
@@ -371,7 +371,7 @@ handle_config_change("couchdb_engines", _, _, _, N) ->
 handle_config_change("admins", _, _, Persist, N) ->
     % spawn here so couch event manager doesn't deadlock
     % spawn(fun() -> couch_passwords_hasher:hash_admin_passwords(Persist) end),
-    couch_password_server:hash(),
+    couch_password_server:async_hash(),
     {ok, N};
 handle_config_change("httpd", "authentication_handlers", _, _, N) ->
     couch_httpd:stop(),

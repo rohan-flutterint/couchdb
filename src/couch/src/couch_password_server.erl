@@ -20,7 +20,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
   code_change/3]).
 
--export([hash/0]).
+-export([sync_hash/0, async_hash/0]).
 
 -record(state, {}).
 
@@ -28,8 +28,10 @@
 %%% Public functions
 %%%===================================================================
 
-hash() ->
-  gen_server:call(?MODULE, {hash_passwords}).
+sync_hash() ->
+  gen_server:call(?MODULE, hash_passwords).
+async_hash() ->
+  gen_server:cast(?MODULE, hash_passwords).
 
 %%%===================================================================
 %%% Spawning and gen_server implementation
@@ -41,12 +43,15 @@ start_link() ->
 init(_Args) ->
   {ok, #state{}}.
 
-handle_call({hash_passwords}, _From, _State) ->
-  hash_admin_passwords();
+handle_call(hash_passwords, _From, _State) ->
+  {reply, hash_admin_passwords(), _State};
 handle_call(_Request, _From, State = #state{}) ->
   {reply, ok, State}.
 
-handle_cast(_Request, State = #state{}) ->
+handle_cast(hash_passwords, _State) ->
+  hash_admin_passwords(),
+  {noreply, _State};
+handle_cast(_Request, State) ->
   {noreply, State}.
 
 handle_info(_Info, State = #state{}) ->
